@@ -1,20 +1,19 @@
 import { ExportProductsMetricsService } from "@/services/projects/export-products-metrics";
 import { Request, Response } from "express";
 import { createReadStream, unlinkSync } from "fs";
+import { readFile } from "fs/promises";
 
 export class ExportProductsMetricsController {
 	constructor (private readonly exportProductsMetricsService: ExportProductsMetricsService) {}
 
-	async handle(request: Request, response: Response): Promise<Response> {
+	async handle(request: Request, response: Response): Promise<any> {
 		try {
 			const filePath = await this.exportProductsMetricsService.execute();
-
-			const pdfReadStream = createReadStream(filePath);
 
 			response.setHeader('Content-Type', 'application/pdf');
 			response.setHeader('Content-Disposition', 'attachment; filename=projects-metrics.pdf');
 
-			return pdfReadStream.pipe(response).on('finish', () => unlinkSync(filePath));
+			return response.download(filePath);
 		} catch (error) {
 			console.error(error)
 

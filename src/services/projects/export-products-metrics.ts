@@ -9,8 +9,13 @@ export class ExportProductsMetricsService {
 		const htmlTemplate = await readFile(path.resolve(__dirname, '..', '..', 'template', 'template.hbs'));
 		const htmlTemplateCompiler = Handlebars.compile(htmlTemplate.toString());
 		const compiledHtmlTemplate = htmlTemplateCompiler({
-			message: 'Hello World'
+			title: 'Project #1',
+			text: `Lorem ipsum dolor sit amet consectetur adipisicing elit. Obcaecati velit quis quos optio voluptatem quam qui
+			minima! Voluptatem mollitia maxime ullam nesciunt quisquam suscipit. Velit repellat aperiam rerum quibusdam
+			pariatur?`
 		});
+
+		await writeFile(path.resolve(__dirname, 'tmp', `${Date.now()}.html`), compiledHtmlTemplate);
 
 		const browser = await puppeteer.launch({
 			headless: true,
@@ -18,27 +23,21 @@ export class ExportProductsMetricsService {
 
 		const page = await browser.newPage();
 
-		await page.goto(`data:text/html;charset=UTF-8,${compiledHtmlTemplate}`, {
-			waitUntil: 'networkidle0',
-		});
+		await page.setContent(compiledHtmlTemplate);
+
+		await page.emulateMediaType('screen')
 
 		const pdf =	await page.pdf({
-			printBackground: true,
-			format: 'A4',
-			margin: {
-				top: '20px',
-				left: '20px',
-				right: '20px',
-				bottom: '20px',
-			},
+			format: 'letter',
+			landscape: true
 		});
 
 		await browser.close();
 
-		const filePath = path.resolve(__dirname, 'tmp', `${Date.now()}.pdf`);
+		const pdfFilePath = path.resolve(__dirname, 'tmp', `${Date.now()}.pdf`);
 
-		await writeFile(filePath, pdf);
+		await writeFile(pdfFilePath, pdf);
 
-		return filePath;
+		return pdfFilePath;
 	}
 }
